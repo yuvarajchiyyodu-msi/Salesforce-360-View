@@ -52,6 +52,48 @@ def test_agent_runs_tool_then_summarizes(monkeypatch):
     assert call_event["org"] == "LMRUATOrg"
 
 
+def test_agent_parses_suggestions_block():
+    answer = (
+        "Across both orgs we found **13 accounts**.\n\n"
+        "<suggestions>\n"
+        "Show open opportunities in VS&A\n"
+        "Break down LMR accounts by type\n"
+        "</suggestions>"
+    )
+    client = FakeBedrock([_text_response(answer)])
+    events = list(run_agent("overview", client=client))
+    summary = next(e for e in events if e["type"] == "summary")
+    suggestions = next(e for e in events if e["type"] == "suggestions")
+    assert "<suggestions>" not in summary["text"]
+    assert "13 accounts" in summary["text"]
+    assert suggestions["items"] == [
+        "Show open opportunities in VS&A",
+        "Break down LMR accounts by type",
+    ]
+
+
+def test_agent_no_suggestions_event_when_absent():
+    client = FakeBedrock([_text_response("Just a plain answer.")])
+    events = list(run_agent("hi", client=client))
+    assert not any(e["type"] == "suggestions" for e in events)
+
+
+def test_agent_passes_history_into_messages():
+    client = FakeBedrock([_text_response("ok")])
+    history = [
+        {"role": "user", "text": "everything on UC"},
+        {"role": "assistant", "text": "Found 13 accounts."},
+    ]
+    list(run_agent("dig into the largest", client=client, history=history))
+    sent = client.calls[0]["messages"]
+    # The loop appends the assistant's own reply after the call, so inspect the
+    # leading turns: history (2) + the new question (1).
+    assert sent[0]["content"][0]["text"] == "everything on UC"
+    assert sent[1]["role"] == "assistant"
+    assert sent[2]["content"][0]["text"] == "dig into the largest"
+    assert sent[2]["role"] == "user"
+
+
 def test_agent_respects_tool_call_cap(monkeypatch):
     import app.agent as agent_mod
     monkeypatch.setattr(

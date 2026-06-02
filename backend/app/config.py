@@ -16,5 +16,5 @@ MODEL_ID = "us.anthropic.claude-sonnet-4-6"
 
 # Safety caps
 MAX_ROWS = 50            # rows returned to Claude per SOQL call
-MAX_TOOL_CALLS = 15      # tool calls per /api/ask request
+MAX_TOOL_CALLS = 8       # tool calls per conversational turn (staggered, not exhaustive)
 SF_TIMEOUT_SECONDS = 60  # per sf subprocess invocation

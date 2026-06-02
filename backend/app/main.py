@@ -9,6 +9,11 @@ from pydantic import BaseModel
 from .agent import run_agent
 from .config import ORGS, ORG_LABELS
 
+
+class Turn(BaseModel):
+    role: str   # "user" | "assistant"
+    text: str
+
 app = FastAPI(title="Headless 360")
 
 app.add_middleware(
@@ -21,6 +26,7 @@ app.add_middleware(
 
 class AskRequest(BaseModel):
     question: str
+    history: list[Turn] = []
 
 
 @app.get("/api/health")
@@ -33,8 +39,10 @@ def health():
 
 @app.post("/api/ask")
 def ask(req: AskRequest):
+    history = [{"role": t.role, "text": t.text} for t in req.history]
+
     def event_stream():
-        for event in run_agent(req.question):
+        for event in run_agent(req.question, history=history):
             yield f"data: {json.dumps(event)}\n\n"
 
     return StreamingResponse(

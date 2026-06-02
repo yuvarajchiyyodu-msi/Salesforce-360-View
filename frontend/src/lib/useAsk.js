@@ -2,30 +2,45 @@ import { useCallback, useRef, useState } from "react";
 
 const API = "http://localhost:8000/api/ask";
 
-// Streams SSE events from POST /api/ask via fetch + ReadableStream.
-// (EventSource only supports GET, so we parse the SSE framing ourselves.)
+// Manages a multi-turn conversation. Each turn is:
+//   { id, question, events: [...], summary, suggestions: [...], status, error }
+// where status is "running" | "done" | "error". Follow-up questions carry the
+// prior turns back to the backend as history, so the agent stays stateless but
+// context-aware.
 export function useAsk() {
-  const [events, setEvents] = useState([]);   // tool_call / tool_result / status
-  const [summary, setSummary] = useState("");
-  const [status, setStatus] = useState("idle"); // idle | running | done | error
-  const [error, setError] = useState(null);
-  const abortRef = useRef(null);
+  const [turns, setTurns] = useState([]);
+  const idRef = useRef(0);
+
+  const running = turns.some((t) => t.status === "running");
 
   const ask = useCallback(async (question) => {
-    setEvents([]);
-    setSummary("");
-    setError(null);
-    setStatus("running");
+    const id = ++idRef.current;
 
-    const controller = new AbortController();
-    abortRef.current = controller;
+    // Build history from completed turns BEFORE adding the new one.
+    let history = [];
+    setTurns((prev) => {
+      history = prev.flatMap((t) =>
+        t.summary
+          ? [
+              { role: "user", text: t.question },
+              { role: "assistant", text: t.summary },
+            ]
+          : []
+      );
+      return [
+        ...prev,
+        { id, question, events: [], summary: "", suggestions: [], status: "running", error: null },
+      ];
+    });
+
+    const patch = (fn) =>
+      setTurns((prev) => prev.map((t) => (t.id === id ? fn(t) : t)));
 
     try {
       const res = await fetch(API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-        signal: controller.signal,
+        body: JSON.stringify({ question, history }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
@@ -43,37 +58,36 @@ export function useAsk() {
         for (const frame of frames) {
           const line = frame.split("\n").find((l) => l.startsWith("data: "));
           if (!line) continue;
-          const evt = JSON.parse(line.slice(6));
-          handleEvent(evt, { setEvents, setSummary, setStatus, setError });
+          applyEvent(JSON.parse(line.slice(6)), patch);
         }
       }
-      setStatus((s) => (s === "error" ? s : "done"));
+      patch((t) => (t.status === "error" ? t : { ...t, status: "done" }));
     } catch (e) {
-      if (e.name === "AbortError") return;
-      setError(e.message);
-      setStatus("error");
+      patch((t) => ({ ...t, status: "error", error: e.message }));
     }
   }, []);
 
-  return { ask, events, summary, status, error };
+  return { ask, turns, running };
 }
 
-function handleEvent(evt, { setEvents, setSummary, setStatus, setError }) {
+function applyEvent(evt, patch) {
   switch (evt.type) {
     case "status":
     case "tool_call":
     case "tool_result":
-      setEvents((prev) => mergeEvent(prev, evt));
+      patch((t) => ({ ...t, events: mergeEvent(t.events, evt) }));
       break;
     case "summary":
-      setSummary(evt.text);
+      patch((t) => ({ ...t, summary: evt.text }));
+      break;
+    case "suggestions":
+      patch((t) => ({ ...t, suggestions: evt.items ?? [] }));
       break;
     case "done":
-      setStatus((s) => (s === "error" ? s : "done"));
+      patch((t) => (t.status === "error" ? t : { ...t, status: "done" }));
       break;
     case "error":
-      setError(evt.message);
-      setStatus("error");
+      patch((t) => ({ ...t, status: "error", error: evt.message }));
       break;
     default:
       break;
@@ -82,13 +96,11 @@ function handleEvent(evt, { setEvents, setSummary, setStatus, setError }) {
 
 // tool_result merges onto its matching tool_call by id so the feed shows one
 // line per tool with a resolved state.
-function mergeEvent(prev, evt) {
+function mergeEvent(events, evt) {
   if (evt.type === "tool_result") {
-    return prev.map((e) =>
-      e.type === "tool_call" && e.id === evt.id
-        ? { ...e, result: evt }
-        : e
+    return events.map((e) =>
+      e.type === "tool_call" && e.id === evt.id ? { ...e, result: evt } : e
     );
   }
-  return [...prev, evt];
+  return [...events, evt];
 }

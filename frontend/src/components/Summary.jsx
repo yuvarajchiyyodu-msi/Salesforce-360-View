@@ -1,13 +1,72 @@
 import { LayersIcon } from "../lib/icons.jsx";
 
-// Minimal, dependency-free markdown rendering for the agent's summary:
-// headings, bold, list items, and paragraphs. Good enough for the demo.
-function renderInline(text) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+// Dependency-free markdown rendering tuned for the agent's 360 summaries:
+// headings, bold, lists, horizontal rules, and — most importantly — GitHub-style
+// pipe tables, which the agent leans on heavily. Emoji are stripped (they read as
+// AI-slop and clash with the line-icon visual language).
+
+const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️‍]/gu;
+
+function clean(text) {
+  return text.replace(EMOJI, "").replace(/\s{2,}/g, " ").trim();
+}
+
+function renderInline(text, keyBase) {
+  const parts = clean(text).split(/(\*\*[^*]+\*\*)/g);
   return parts.map((p, i) =>
     p.startsWith("**") && p.endsWith("**")
-      ? <strong key={i} className="text-ms-text font-600">{p.slice(2, -2)}</strong>
-      : <span key={i}>{p}</span>
+      ? <strong key={`${keyBase}-${i}`} className="text-ms-text font-600">{p.slice(2, -2)}</strong>
+      : <span key={`${keyBase}-${i}`}>{p}</span>
+  );
+}
+
+// A pipe-table row: "| a | b |" -> ["a", "b"]. Returns null if not a table row.
+function splitRow(line) {
+  const t = line.trim();
+  if (!t.startsWith("|")) return null;
+  return t.replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+}
+
+// A separator row: "|---|:--:|---|" — all cells are dashes/colons.
+function isSeparator(line) {
+  const cells = splitRow(line);
+  return cells != null && cells.every((c) => /^:?-{2,}:?$/.test(c.replace(/\s/g, "")));
+}
+
+function Table({ headers, rows, keyBase }) {
+  return (
+    <div className="my-4 overflow-x-auto rounded-lg border border-ms-line">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="bg-ms-ink/60">
+            {headers.map((h, i) => (
+              <th
+                key={`${keyBase}-h-${i}`}
+                className="border-b border-ms-line px-3 py-2 text-left font-display font-600 text-xs uppercase tracking-wide text-ms-muted whitespace-nowrap"
+              >
+                {renderInline(h, `${keyBase}-h-${i}`)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, r) => (
+            <tr key={`${keyBase}-r-${r}`} className="even:bg-ms-ink/30 hover:bg-ms-blue/5 transition-colors">
+              {row.map((cell, c) => (
+                <td
+                  key={`${keyBase}-r-${r}-c-${c}`}
+                  className={`border-b border-ms-line/50 px-3 py-2 align-top ${
+                    c === 0 ? "text-ms-text font-500" : "text-ms-muted"
+                  }`}
+                >
+                  {renderInline(cell, `${keyBase}-r-${r}-c-${c}`)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -16,14 +75,15 @@ function renderMarkdown(md) {
   const out = [];
   let list = [];
 
-  const flush = () => {
+  const flushList = () => {
     if (list.length) {
+      const items = list;
       out.push(
-        <ul key={`ul-${out.length}`} className="my-2 space-y-1 pl-1">
-          {list.map((item, i) => (
-            <li key={i} className="flex gap-2 text-ms-muted">
+        <ul key={`ul-${out.length}`} className="my-2 space-y-1.5 pl-1">
+          {items.map((item, i) => (
+            <li key={i} className="flex gap-2.5 text-ms-muted leading-relaxed">
               <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-ms-blue" />
-              <span>{renderInline(item)}</span>
+              <span>{renderInline(item, `li-${out.length}-${i}`)}</span>
             </li>
           ))}
         </ul>
@@ -32,29 +92,67 @@ function renderMarkdown(md) {
     }
   };
 
-  for (const raw of lines) {
-    const line = raw.trimEnd();
-    if (!line.trim()) { flush(); continue; }
-    if (/^#{1,6}\s/.test(line)) {
-      flush();
-      const text = line.replace(/^#{1,6}\s/, "");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trimEnd();
+    const bare = line.trim();
+
+    if (!bare) { flushList(); continue; }
+
+    // Horizontal rule (---, ***, ___) — render as a hairline, not literal text.
+    if (/^([-*_])\1{2,}$/.test(bare.replace(/\s/g, ""))) {
+      flushList();
+      out.push(<hr key={`hr-${out.length}`} className="my-4 border-0 border-t border-ms-line/70" />);
+      continue;
+    }
+
+    // Table: a header row immediately followed by a separator row.
+    const headerCells = splitRow(line);
+    if (headerCells && i + 1 < lines.length && isSeparator(lines[i + 1])) {
+      flushList();
+      const rows = [];
+      let j = i + 2;
+      while (j < lines.length && splitRow(lines[j]) && !isSeparator(lines[j])) {
+        rows.push(splitRow(lines[j]));
+        j++;
+      }
+      out.push(<Table key={`tbl-${out.length}`} headers={headerCells} rows={rows} keyBase={`tbl-${out.length}`} />);
+      i = j - 1;
+      continue;
+    }
+
+    if (/^#{1,6}\s/.test(bare)) {
+      flushList();
+      const text = bare.replace(/^#{1,6}\s/, "");
+      const level = (bare.match(/^#+/) || ["#"])[0].length;
       out.push(
-        <h3 key={`h-${out.length}`} className="mt-4 mb-1 font-display font-600 text-lg text-ms-text">
-          {renderInline(text)}
+        <h3
+          key={`h-${out.length}`}
+          className={`font-display font-600 text-ms-text ${
+            level <= 2 ? "mt-6 mb-2 text-xl" : "mt-4 mb-1 text-base"
+          }`}
+        >
+          {renderInline(text, `h-${out.length}`)}
         </h3>
       );
-    } else if (/^[-*]\s/.test(line)) {
-      list.push(line.replace(/^[-*]\s/, ""));
+    } else if (/^[-*]\s/.test(bare)) {
+      list.push(bare.replace(/^[-*]\s/, ""));
+    } else if (/^>\s?/.test(bare)) {
+      flushList();
+      out.push(
+        <p key={`q-${out.length}`} className="my-2 rounded-md border border-ms-line bg-ms-ink/40 px-3 py-2 text-sm text-ms-muted">
+          {renderInline(bare.replace(/^>\s?/, ""), `q-${out.length}`)}
+        </p>
+      );
     } else {
-      flush();
+      flushList();
       out.push(
         <p key={`p-${out.length}`} className="my-1.5 text-ms-muted leading-relaxed">
-          {renderInline(line)}
+          {renderInline(bare, `p-${out.length}`)}
         </p>
       );
     }
   }
-  flush();
+  flushList();
   return out;
 }
 
