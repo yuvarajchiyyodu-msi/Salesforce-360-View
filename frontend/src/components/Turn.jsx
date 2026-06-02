@@ -4,7 +4,7 @@ import Suggestions from "./Suggestions.jsx";
 import { AlertIcon, SearchIcon } from "../lib/icons.jsx";
 
 // One question→answer exchange in the conversation thread.
-export default function Turn({ turn, onAsk, anyRunning }) {
+export default function Turn({ turn, onAsk, anyRunning, isLatest }) {
   const { question, events, summary, suggestions, status, error } = turn;
   const running = status === "running";
 
@@ -42,7 +42,12 @@ export default function Turn({ turn, onAsk, anyRunning }) {
           {summary && <Summary text={summary} />}
 
           {summary && (
-            <Suggestions items={suggestions} onAsk={onAsk} disabled={anyRunning} />
+            <Suggestions
+              items={suggestions}
+              onAsk={onAsk}
+              disabled={anyRunning}
+              showInput={isLatest}
+            />
           )}
 
           {running && !summary && !error && (

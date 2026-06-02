@@ -22,7 +22,12 @@ export default function App() {
               {turns.map((turn, i) => (
                 <div key={turn.id}>
                   {i > 0 && <div className="mb-12 border-t border-ms-line/60" />}
-                  <Turn turn={turn} onAsk={ask} anyRunning={running} />
+                  <Turn
+                    turn={turn}
+                    onAsk={ask}
+                    anyRunning={running}
+                    isLatest={i === turns.length - 1}
+                  />
                 </div>
               ))}
             </div>
