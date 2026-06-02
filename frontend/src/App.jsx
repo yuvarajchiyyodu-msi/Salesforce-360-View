@@ -14,10 +14,16 @@ export default function App() {
       <ProgressBar active={running} />
 
       <main className="flex-1">
-        <SearchHero onAsk={ask} running={running} compact={started} />
+        {!started ? (
+          // Landing: hero owns the viewport, ask bar centered.
+          <SearchHero onAsk={ask} running={running} compact={false} />
+        ) : (
+          <div className="mx-auto w-full max-w-5xl px-6 pb-32 pt-6">
+            {/* Persistent slim ask bar pinned above the thread */}
+            <div className="sticky top-4 z-10 mb-8">
+              <SearchHero onAsk={ask} running={running} compact />
+            </div>
 
-        {started && (
-          <div className="mx-auto w-full max-w-6xl px-8 pb-24">
             <div className="flex flex-col gap-12">
               {turns.map((turn, i) => (
                 <div key={turn.id}>

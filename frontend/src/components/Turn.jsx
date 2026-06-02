@@ -21,8 +21,15 @@ export default function Turn({ turn, onAsk, anyRunning, isLatest }) {
         </div>
       </div>
 
-      {/* The agent's response — left-aligned, stacked, full width */}
-      <div className="mt-5 flex flex-col gap-4">
+      {/* The agent's response — stacked beneath the question. While the agent
+          is still working (no summary yet) the activity feed sits centered and
+          prominent; once the response lands it expands full width and the
+          activity feed collapses out of the way. */}
+      <div
+        className={`mt-5 flex flex-col gap-4 transition-all duration-500 ${
+          running && !summary ? "mx-auto max-w-2xl" : "max-w-none"
+        }`}
+      >
         <ActivityFeed events={events} running={running} />
 
         {error && (
