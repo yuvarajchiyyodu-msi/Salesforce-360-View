@@ -5,7 +5,7 @@ import SearchHero from "./components/SearchHero.jsx";
 import Turn from "./components/Turn.jsx";
 
 export default function App() {
-  const { ask, turns, running } = useAsk();
+  const { ask, turns, running, confirmUpdate, cancelUpdate } = useAsk();
   const started = turns.length > 0;
 
   return (
@@ -33,6 +33,8 @@ export default function App() {
                   <Turn
                     turn={turn}
                     onAsk={ask}
+                    onConfirmUpdate={confirmUpdate}
+                    onCancelUpdate={cancelUpdate}
                     anyRunning={running}
                     isLatest={i === turns.length - 1}
                   />

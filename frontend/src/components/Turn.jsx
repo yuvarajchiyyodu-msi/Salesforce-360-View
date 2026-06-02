@@ -1,13 +1,14 @@
 import ActivityFeed from "./ActivityFeed.jsx";
 import Summary from "./Summary.jsx";
 import Suggestions from "./Suggestions.jsx";
+import ProposalCard from "./ProposalCard.jsx";
 import { AlertIcon } from "../lib/icons.jsx";
 
 // One question→answer exchange, laid out as a chat turn: the user's question
 // sits right-aligned as a bubble, and the agent's response stacks beneath it —
 // collapsible activity, then the consolidated 360 view, then follow-ups.
-export default function Turn({ turn, onAsk, anyRunning, isLatest }) {
-  const { question, events, summary, suggestions, status, error } = turn;
+export default function Turn({ turn, onAsk, onConfirmUpdate, onCancelUpdate, anyRunning, isLatest }) {
+  const { question, events, summary, suggestions, proposal, status, error } = turn;
   const running = status === "running";
 
   return (
@@ -44,6 +45,14 @@ export default function Turn({ turn, onAsk, anyRunning, isLatest }) {
         )}
 
         {summary && <Summary text={summary} />}
+
+        {proposal && (
+          <ProposalCard
+            proposal={proposal}
+            onConfirm={() => onConfirmUpdate(turn.id)}
+            onCancel={() => onCancelUpdate(turn.id)}
+          />
+        )}
 
         {summary && (
           <Suggestions

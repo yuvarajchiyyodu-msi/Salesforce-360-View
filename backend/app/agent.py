@@ -127,6 +127,17 @@ def run_agent(question: str, client=None, max_tool_calls: int = MAX_TOOL_CALLS, 
                     "id": tu["toolUseId"],
                     **_summarize_tool_result(result),
                 }
+                # A successful proposal becomes a confirm-gated card in the UI.
+                # The agent describes it in prose; the actual write happens only
+                # when the user clicks Confirm (separate /api/update endpoint).
+                if tu["name"] == "propose_update" and result.get("ok"):
+                    yield {
+                        "type": "proposal",
+                        "org": result.get("org"),
+                        "sobject": result.get("sobject"),
+                        "record_id": result.get("record_id"),
+                        "changes": result.get("changes", []),
+                    }
                 tool_results.append({
                     "toolResult": {
                         "toolUseId": tu["toolUseId"],

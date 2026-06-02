@@ -31,3 +31,12 @@ export const ChevronIcon = (p) => (
 export const LayersIcon = (p) => (
   <svg {...base} {...p}><path d="m12 2 9 5-9 5-9-5 9-5z" /><path d="m3 12 9 5 9-5" /><path d="m3 17 9 5 9-5" /></svg>
 );
+export const EditIcon = (p) => (
+  <svg {...base} {...p}><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+);
+export const XIcon = (p) => (
+  <svg {...base} {...p}><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+);
+export const ArrowRightIcon = (p) => (
+  <svg {...base} {...p}><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+);

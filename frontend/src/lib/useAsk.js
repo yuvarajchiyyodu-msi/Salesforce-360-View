@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
 const API = "http://localhost:8000/api/ask";
+const UPDATE_API = "http://localhost:8000/api/update";
 
 // Manages a multi-turn conversation. Each turn is:
 //   { id, question, events: [...], summary, suggestions: [...], status, error }
@@ -29,7 +30,7 @@ export function useAsk() {
       );
       return [
         ...prev,
-        { id, question, events: [], summary: "", suggestions: [], status: "running", error: null },
+        { id, question, events: [], summary: "", suggestions: [], proposal: null, status: "running", error: null },
       ];
     });
 
@@ -67,7 +68,53 @@ export function useAsk() {
     }
   }, []);
 
-  return { ask, turns, running };
+  // Apply a confirmed proposal. This is the only write the app makes; it fires
+  // only on an explicit user click, and the backend re-checks the allowlist.
+  const confirmUpdate = useCallback(async (turnId) => {
+    const patchProposal = (fn) =>
+      setTurns((prev) =>
+        prev.map((t) => (t.id === turnId && t.proposal ? { ...t, proposal: fn(t.proposal) } : t))
+      );
+
+    let proposal;
+    setTurns((prev) => {
+      proposal = prev.find((t) => t.id === turnId)?.proposal;
+      return prev;
+    });
+    if (!proposal || proposal.status !== "pending") return;
+
+    patchProposal((p) => ({ ...p, status: "applying", error: null }));
+    try {
+      const fields = Object.fromEntries(proposal.changes.map((c) => [c.field, c.to]));
+      const res = await fetch(UPDATE_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          org: proposal.org,
+          sobject: proposal.sobject,
+          record_id: proposal.record_id,
+          fields,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      patchProposal((p) => ({ ...p, status: "applied" }));
+    } catch (e) {
+      patchProposal((p) => ({ ...p, status: "error", error: e.message }));
+    }
+  }, []);
+
+  const cancelUpdate = useCallback((turnId) => {
+    setTurns((prev) =>
+      prev.map((t) =>
+        t.id === turnId && t.proposal && t.proposal.status === "pending"
+          ? { ...t, proposal: { ...t.proposal, status: "cancelled" } }
+          : t
+      )
+    );
+  }, []);
+
+  return { ask, turns, running, confirmUpdate, cancelUpdate };
 }
 
 function applyEvent(evt, patch) {
@@ -82,6 +129,19 @@ function applyEvent(evt, patch) {
       break;
     case "suggestions":
       patch((t) => ({ ...t, suggestions: evt.items ?? [] }));
+      break;
+    case "proposal":
+      patch((t) => ({
+        ...t,
+        proposal: {
+          org: evt.org,
+          sobject: evt.sobject,
+          record_id: evt.record_id,
+          changes: evt.changes ?? [],
+          status: "pending", // pending | applying | applied | error
+          error: null,
+        },
+      }));
       break;
     case "done":
       patch((t) => (t.status === "error" ? t : { ...t, status: "done" }));
