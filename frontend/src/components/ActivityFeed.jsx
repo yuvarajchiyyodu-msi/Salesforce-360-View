@@ -22,7 +22,10 @@ export default function ActivityFeed({ events, running }) {
 
   if (!events.length && !running) return null;
 
-  const queryCount = events.filter((e) => e.type === "tool_call").length;
+  const toolEvents = events.filter((e) => e.type === "tool_call");
+  const statusEvents = events.filter((e) => e.type === "status");
+  const latestStatus = statusEvents[statusEvents.length - 1];
+  const queryCount = toolEvents.length;
 
   return (
     <aside className="overflow-hidden rounded-xl border border-ms-line bg-ms-surface/60">
@@ -45,13 +48,17 @@ export default function ActivityFeed({ events, running }) {
       </button>
       {open && (
         <ol className="divide-y divide-ms-line/60 border-t border-ms-line">
-          {events.map((e, i) => (
+          {/* Tool calls are the durable record; render them always. */}
+          {toolEvents.map((e, i) => (
             <FeedRow key={e.id ?? `s-${i}`} event={e} index={i} />
           ))}
-          {running && (
+          {/* Status messages are transient narration — show only the latest,
+              and only while the agent is still working, so nothing stale (like
+              the opening "Thinking…") lingers after the turn completes. */}
+          {running && latestStatus && (
             <li className="flex items-center gap-3 px-4 py-3 text-ms-muted">
               <SpinnerIcon width={16} height={16} />
-              <span className="text-sm">Working…</span>
+              <span className="text-sm italic">{latestStatus.message}</span>
             </li>
           )}
         </ol>
@@ -63,19 +70,7 @@ export default function ActivityFeed({ events, running }) {
 function FeedRow({ event, index }) {
   const [open, setOpen] = useState(false);
 
-  if (event.type === "status") {
-    return (
-      <li
-        className="flex items-center gap-3 px-4 py-2.5 animate-lineIn"
-        style={{ animationDelay: `${Math.min(index, 6) * 40}ms` }}
-      >
-        <span className="h-1.5 w-1.5 rounded-full bg-ms-muted/50" />
-        <span className="text-sm text-ms-muted italic">{event.message}</span>
-      </li>
-    );
-  }
-
-  // tool_call (with optional resolved .result)
+  // Only tool_call events reach here (status is rendered separately).
   const res = event.result;
   const pending = !res;
   const failed = res && !res.ok;
