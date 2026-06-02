@@ -11,3 +11,7 @@ frontend/dist/
 # Env / OS
 .env
 .DS_Store
+
+# Tooling artifacts
+frontend/.playwright-mcp/
+.playwright-mcp/
