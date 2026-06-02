@@ -1,11 +1,14 @@
 import { LayersIcon } from "../lib/icons.jsx";
-import MotorolaLogo from "./MotorolaLogo.jsx";
 
 export default function TopBar({ orgsConnected = 2 }) {
   return (
     <header className="flex items-center justify-between px-8 py-5 border-b border-ms-line">
       <div className="flex items-center gap-4">
-        <MotorolaLogo />
+        {/* The official lockup ships with a white background, so present it on a
+            clean white tile — the same treatment Salesforce uses on its header. */}
+        <span className="inline-flex items-center rounded-lg bg-white px-4 py-2.5 ring-1 ring-white/10">
+          <img src="/motorola.avif" alt="Motorola Solutions" className="h-9 w-auto" />
+        </span>
         <div className="h-6 w-px bg-ms-line" />
         <div className="flex items-baseline gap-2">
           <span className="font-display font-700 text-lg tracking-tight">Headless</span>
