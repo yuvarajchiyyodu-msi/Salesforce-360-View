@@ -9,7 +9,7 @@ export default function App() {
   const started = turns.length > 0;
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen w-full flex-col overflow-x-hidden">
       <TopBar orgsConnected={2} />
       <ProgressBar active={running} />
 

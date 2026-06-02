@@ -8,8 +8,18 @@
 
 html, body, #root { height: 100%; }
 
+/* Dark on BOTH html and body so any scroll/overflow never reveals a white
+   gutter, and clamp horizontal overflow so the page can't scroll sideways. */
+html {
+  background: #0B0E11;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   background: #0B0E11;
   color: #E7ECF2;
   font-family: 'Inter Tight', system-ui, sans-serif;
