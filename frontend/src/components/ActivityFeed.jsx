@@ -1,34 +1,61 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DatabaseIcon, SchemaIcon, BoltIcon, CheckIcon, AlertIcon, SpinnerIcon, ChevronIcon,
 } from "../lib/icons.jsx";
 
 const ORG_LABEL = { LMRUATOrg: "MCN / LMR", VSAUATOrg: "VS&A" };
 const ORG_DOT = { LMRUATOrg: "bg-lmr", VSAUATOrg: "bg-vsa" };
+// Tinted badge: accent at low opacity for fill, full accent for text + dot.
+const ORG_BADGE = {
+  LMRUATOrg: "bg-lmr/15 text-lmr ring-1 ring-lmr/30",
+  VSAUATOrg: "bg-vsa/15 text-vsa ring-1 ring-vsa/30",
+};
 
 export default function ActivityFeed({ events, running }) {
+  // Open while the agent is working so the user can watch the queries land;
+  // auto-collapse once the answer is in so the 360 view leads. The user can
+  // re-open it any time to audit the SOQL behind a result.
+  const [open, setOpen] = useState(true);
+  useEffect(() => {
+    if (!running) setOpen(false);
+  }, [running]);
+
   if (!events.length && !running) return null;
 
+  const queryCount = events.filter((e) => e.type === "tool_call").length;
+
   return (
-    <aside className="rounded-xl border border-ms-line bg-ms-surface/60">
-      <div className="flex items-center gap-2 border-b border-ms-line px-4 py-3">
+    <aside className="overflow-hidden rounded-xl border border-ms-line bg-ms-surface/60">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-ms-blue/5"
+        aria-expanded={open}
+      >
         <BoltIcon width={16} height={16} className="text-ms-blue" />
         <span className="font-display font-600 text-sm">Agent activity</span>
+        {running && <SpinnerIcon width={13} height={13} className="text-ms-muted" />}
         <span className="ml-auto font-mono text-xs text-ms-muted">
-          {events.filter((e) => e.type === "tool_call").length} queries
+          {queryCount} {queryCount === 1 ? "query" : "queries"}
         </span>
-      </div>
-      <ol className="divide-y divide-ms-line/60">
-        {events.map((e, i) => (
-          <FeedRow key={e.id ?? `s-${i}`} event={e} index={i} />
-        ))}
-        {running && (
-          <li className="flex items-center gap-3 px-4 py-3 text-ms-muted">
-            <SpinnerIcon width={16} height={16} />
-            <span className="text-sm">Working…</span>
-          </li>
-        )}
-      </ol>
+        <ChevronIcon
+          width={16}
+          height={16}
+          className={`text-ms-muted transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <ol className="divide-y divide-ms-line/60 border-t border-ms-line">
+          {events.map((e, i) => (
+            <FeedRow key={e.id ?? `s-${i}`} event={e} index={i} />
+          ))}
+          {running && (
+            <li className="flex items-center gap-3 px-4 py-3 text-ms-muted">
+              <SpinnerIcon width={16} height={16} />
+              <span className="text-sm">Working…</span>
+            </li>
+          )}
+        </ol>
+      )}
     </aside>
   );
 }
@@ -64,8 +91,12 @@ function FeedRow({ event, index }) {
           {isDescribe ? <SchemaIcon width={16} height={16} /> : <DatabaseIcon width={16} height={16} />}
         </span>
 
-        <span className={`h-2 w-2 shrink-0 rounded-full ${ORG_DOT[event.org] ?? "bg-ms-muted"}`} />
-        <span className="font-mono text-xs text-ms-muted w-20 shrink-0">
+        <span
+          className={`flex shrink-0 items-center gap-1.5 rounded-md px-2 py-0.5 font-mono text-xs ${
+            ORG_BADGE[event.org] ?? "bg-ms-muted/10 text-ms-muted ring-1 ring-ms-line"
+          }`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${ORG_DOT[event.org] ?? "bg-ms-muted"}`} />
           {ORG_LABEL[event.org] ?? "—"}
         </span>
 
