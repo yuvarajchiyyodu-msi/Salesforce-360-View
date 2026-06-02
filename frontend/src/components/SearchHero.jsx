@@ -56,7 +56,7 @@ export default function SearchHero({ onAsk, running, compact }) {
 
   // Landing — centered in the viewport, vertically and horizontally.
   return (
-    <section className="flex min-h-[calc(100vh-73px)] flex-col items-center justify-center px-6 pb-24 text-center">
+    <section className="flex w-full flex-col items-center px-6 text-center">
       <h1 className="font-display font-700 text-4xl leading-[1.05] tracking-tight md:text-6xl">
         One question.
         <br />

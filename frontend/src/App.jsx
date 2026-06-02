@@ -13,10 +13,12 @@ export default function App() {
       <TopBar orgsConnected={2} />
       <ProgressBar active={running} />
 
-      <main className="flex-1">
+      <main className="flex flex-1 flex-col">
         {!started ? (
-          // Landing: hero owns the viewport, ask bar centered.
-          <SearchHero onAsk={ask} running={running} compact={false} />
+          // Landing: hero fills the remaining space and centers within it.
+          <div className="flex flex-1 items-center justify-center">
+            <SearchHero onAsk={ask} running={running} compact={false} />
+          </div>
         ) : (
           <div className="mx-auto w-full max-w-3xl px-6 pb-32 pt-6">
             {/* Persistent slim ask bar pinned above the thread */}
