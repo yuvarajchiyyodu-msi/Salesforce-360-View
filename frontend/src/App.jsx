@@ -9,11 +9,21 @@ export default function App() {
   const started = turns.length > 0;
 
   return (
-    <div className="flex min-h-screen w-full flex-col overflow-x-hidden">
-      <TopBar orgsConnected={2} />
-      <ProgressBar active={running} />
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+      {/* Brand watermark — centered, faint, behind all content */}
+      <img
+        src="/msi-emblem.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none fixed left-1/2 top-1/2 z-0 w-[380px] max-w-[60vw] -translate-x-1/2 -translate-y-1/2 opacity-[0.05] select-none"
+      />
 
-      <main className="flex flex-1 flex-col">
+      <div className="relative z-10">
+        <TopBar orgsConnected={2} />
+        <ProgressBar active={running} />
+      </div>
+
+      <main className="relative z-10 flex flex-1 flex-col">
         {!started ? (
           // Landing: hero fills the remaining space and centers within it.
           <div className="flex flex-1 items-center justify-center">
