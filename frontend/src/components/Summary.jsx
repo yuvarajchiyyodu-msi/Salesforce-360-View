@@ -79,10 +79,10 @@ function renderMarkdown(md) {
     if (list.length) {
       const items = list;
       out.push(
-        <ul key={`ul-${out.length}`} className="my-2 space-y-1.5 pl-1">
+        <ul key={`ul-${out.length}`} className="my-2 space-y-1.5">
           {items.map((item, i) => (
-            <li key={i} className="flex gap-2.5 text-ms-muted leading-relaxed">
-              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-ms-blue" />
+            <li key={i} className="flex items-center justify-center gap-2.5 text-ms-muted leading-relaxed">
+              <span className="h-1 w-1 shrink-0 rounded-full bg-ms-blue" />
               <span>{renderInline(item, `li-${out.length}-${i}`)}</span>
             </li>
           ))}
@@ -159,14 +159,14 @@ function renderMarkdown(md) {
 export default function Summary({ text }) {
   if (!text) return null;
   return (
-    <section className="rounded-xl border border-ms-line bg-gradient-to-b from-ms-surface to-ms-surface/40 p-6 animate-riseIn">
-      <div className="mb-3 flex items-center gap-2">
+    <section className="animate-riseIn text-center">
+      <div className="mb-4 flex items-center justify-center gap-2">
         <LayersIcon width={18} height={18} className="text-ms-blue" />
         <span className="font-display font-600 text-sm uppercase tracking-wider text-ms-muted">
           Consolidated 360° view
         </span>
       </div>
-      <div className="text-[15px]">{renderMarkdown(text)}</div>
+      <div className="text-[15px] leading-relaxed text-ms-text">{renderMarkdown(text)}</div>
     </section>
   );
 }

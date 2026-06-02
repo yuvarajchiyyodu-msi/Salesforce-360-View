@@ -18,7 +18,7 @@ export default function App() {
           // Landing: hero owns the viewport, ask bar centered.
           <SearchHero onAsk={ask} running={running} compact={false} />
         ) : (
-          <div className="mx-auto w-full max-w-5xl px-6 pb-32 pt-6">
+          <div className="mx-auto w-full max-w-3xl px-6 pb-32 pt-6">
             {/* Persistent slim ask bar pinned above the thread */}
             <div className="sticky top-4 z-10 mb-8">
               <SearchHero onAsk={ask} running={running} compact />
