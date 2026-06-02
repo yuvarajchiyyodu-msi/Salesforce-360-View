@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: #0B0E11;
+  color: #E7ECF2;
+  font-family: 'Inter Tight', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* subtle vignette so the canvas isn't a flat slab */
+  background-image: radial-gradient(120% 80% at 50% -10%, rgba(0,115,207,0.08), transparent 60%);
+  background-attachment: fixed;
+}
+
+::selection { background: rgba(0,115,207,0.35); }
+
+/* thin custom scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #222831; border-radius: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
