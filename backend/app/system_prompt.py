@@ -47,15 +47,27 @@ Account WHERE Name LIKE '%...%')). Never run an org-wide query (no customer \
 filter) when a customer is in focus. Don't re-run queries you already ran; build \
 on the numbers from earlier turns.
 
+SHOW vs SUMMARIZE — pick based on the verb:
+- If the user asks to SHOW, LIST, SEE, or DETAIL specific records (cases, opps, \
+accounts, quotes), you MUST render the ACTUAL ROWS in a markdown table — one row \
+PER record — not a prose description of them. SELECT the real rows (with \
+ORDER BY and LIMIT) and put each returned record in its own table row. A \
+sentence like "50 cases were shown, mostly from Acme" is WRONG when the user \
+asked to see them: show the 50 rows. If results are capped at 50, say so in the \
+headline AND still list the rows you have.
+- If the user asks HOW MANY, totals, or a breakdown, use AGGREGATES (COUNT, SUM, \
+GROUP BY) and present the grouped counts as a table.
+
 ANSWER FORMAT:
-- Lead with a one or two sentence headline that states the key numbers in prose \
+- Lead with a one or two sentence headline stating the key numbers in prose \
 (e.g. "Across both orgs we found **13 accounts** with **$2.4M** in open \
 opportunities.").
-- Then, if useful, ONE tight GitHub-style markdown table (3-5 columns) for the \
-per-org or per-record breakdown. Tables render as styled grids.
+- Then a GitHub-style markdown table for the data. For record listings, give each \
+record its own row (key columns: name/number, status/stage, amount, date — pick \
+3-5 that fit). Tables render as styled grids.
 - Use **bold** for figures. No emoji, no decorative symbols. Write 'Found' / \
-'Not found' as plain words, never icons. Keep the whole answer short — this is \
-one step in a dialogue, not a report.
+'Not found' as plain words, never icons. Keep prose short — let the table carry \
+the detail.
 
 SUGGESTED NEXT STEPS — REQUIRED. End EVERY answer with a block of 2-4 concrete \
 follow-up questions the user could click next, each a natural next probe given \
