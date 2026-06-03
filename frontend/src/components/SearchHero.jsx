@@ -58,13 +58,14 @@ export default function SearchHero({ onAsk, running, compact }) {
   return (
     <section className="flex w-full flex-col items-center px-6 text-center">
       <h1 className="font-display font-700 text-4xl leading-[1.05] tracking-tight md:text-6xl">
-        One question.
+        One Vantage.
         <br />
-        <span className="text-ms-blue">Every system, answered.</span>
+        <span className="text-ms-blue">Every Salesforce system.</span>
       </h1>
-      <p className="mt-5 max-w-xl text-ms-muted">
-        Ask in plain language. Headless&nbsp;360 queries MCN&nbsp;/&nbsp;LMR and
-        VS&amp;A live, reconciles them, and hands back one view.
+      <p className="mt-5 max-w-2xl text-ms-muted">
+        Ask in plain language. We query MCN&nbsp;/&nbsp;LMR and VS&amp;A live,
+        reconcile them into a single view, and let you update cases and
+        opportunities right here, no swivel-chairing between orgs.
       </p>
 
       <form onSubmit={submit} className="mt-9 w-full max-w-2xl">
