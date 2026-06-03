@@ -13,8 +13,8 @@ export default function TopBar({ orgsConnected = 2 }) {
         />
         <div className="h-6 w-px bg-ms-line" />
         <div className="flex items-baseline gap-2">
-          <span className="font-display font-700 text-lg tracking-tight">to be determined</span>
-          <span className="font-display font-700 text-lg tracking-tight text-ms-blue">360</span>
+          <span className="font-display font-700 text-xl tracking-tight">to be determined</span>
+          <span className="font-display font-700 text-xl tracking-tight text-ms-blue">360</span>
         </div>
       </div>
       <div className="flex items-center gap-2.5 rounded-full border border-ms-blue/30 bg-ms-blue/10 px-4 py-2">

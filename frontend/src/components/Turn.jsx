@@ -8,7 +8,7 @@ import { AlertIcon } from "../lib/icons.jsx";
 // sits right-aligned as a bubble, and the agent's response stacks beneath it —
 // collapsible activity, then the consolidated 360 view, then follow-ups.
 export default function Turn({ turn, onAsk, onConfirmUpdate, onCancelUpdate, anyRunning, isLatest }) {
-  const { question, events, summary, suggestions, proposal, status, error } = turn;
+  const { question, events, summary, suggestions, proposals, status, error } = turn;
   const running = status === "running";
 
   return (
@@ -46,12 +46,17 @@ export default function Turn({ turn, onAsk, onConfirmUpdate, onCancelUpdate, any
 
         {summary && <Summary text={summary} />}
 
-        {proposal && (
-          <ProposalCard
-            proposal={proposal}
-            onConfirm={() => onConfirmUpdate(turn.id)}
-            onCancel={() => onCancelUpdate(turn.id)}
-          />
+        {proposals && proposals.length > 0 && (
+          <div className="flex flex-col gap-4">
+            {proposals.map((proposal, i) => (
+              <ProposalCard
+                key={i}
+                proposal={proposal}
+                onConfirm={() => onConfirmUpdate(turn.id, i)}
+                onCancel={() => onCancelUpdate(turn.id, i)}
+              />
+            ))}
+          </div>
         )}
 
         {summary && (

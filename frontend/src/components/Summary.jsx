@@ -55,7 +55,7 @@ function Table({ headers, rows, keyBase }) {
               {row.map((cell, c) => (
                 <td
                   key={`${keyBase}-r-${r}-c-${c}`}
-                  className={`border-b border-ms-line/50 px-3 py-2 align-top ${
+                  className={`border-b border-ms-line/50 px-3 py-2 text-left align-top ${
                     c === 0 ? "text-ms-text font-500" : "text-ms-muted"
                   }`}
                 >
@@ -166,7 +166,7 @@ export default function Summary({ text }) {
           Consolidated 360° view
         </span>
       </div>
-      <div className="text-[15px] leading-relaxed text-ms-text">{renderMarkdown(text)}</div>
+      <div className="text-lg leading-relaxed text-ms-text">{renderMarkdown(text)}</div>
     </section>
   );
 }

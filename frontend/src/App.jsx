@@ -10,13 +10,16 @@ export default function App() {
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
-      {/* Brand watermark — centered, faint, behind all content */}
+      {/* Ambient brand background — full-bleed dark eco animation behind all
+          content, dimmed so the UI stays readable. */}
       <img
-        src="/msi-emblem.png"
+        src="/bg-eco.gif"
         alt=""
         aria-hidden="true"
-        className="pointer-events-none fixed left-1/2 top-1/2 z-0 w-[380px] max-w-[60vw] -translate-x-1/2 -translate-y-1/2 opacity-[0.05] select-none"
+        className="pointer-events-none fixed inset-0 z-0 h-full w-full object-cover opacity-[0.05] select-none"
       />
+      {/* Scrim so text keeps contrast over the animation */}
+      <div className="pointer-events-none fixed inset-0 z-0 bg-ms-ink/40" />
 
       <div className="relative z-10">
         <TopBar orgsConnected={2} />

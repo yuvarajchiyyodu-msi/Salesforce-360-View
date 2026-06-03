@@ -58,7 +58,7 @@ export default function SearchHero({ onAsk, running, compact }) {
   return (
     <section className="flex w-full flex-col items-center px-6 text-center">
       <h1 className="font-display font-700 text-4xl leading-[1.05] tracking-tight md:text-6xl">
-        One Vantage.
+        One Vantage Point.
         <br />
         <span className="text-ms-blue">Every Salesforce system.</span>
       </h1>

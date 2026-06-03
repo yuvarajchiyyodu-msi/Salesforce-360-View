@@ -30,7 +30,7 @@ export function useAsk() {
       );
       return [
         ...prev,
-        { id, question, events: [], summary: "", suggestions: [], proposal: null, status: "running", error: null },
+        { id, question, events: [], summary: "", suggestions: [], proposals: [], status: "running", error: null },
       ];
     });
 
@@ -70,15 +70,19 @@ export function useAsk() {
 
   // Apply a confirmed proposal. This is the only write the app makes; it fires
   // only on an explicit user click, and the backend re-checks the allowlist.
-  const confirmUpdate = useCallback(async (turnId) => {
+  const confirmUpdate = useCallback(async (turnId, proposalIndex) => {
     const patchProposal = (fn) =>
       setTurns((prev) =>
-        prev.map((t) => (t.id === turnId && t.proposal ? { ...t, proposal: fn(t.proposal) } : t))
+        prev.map((t) =>
+          t.id === turnId
+            ? { ...t, proposals: t.proposals.map((p, i) => (i === proposalIndex ? fn(p) : p)) }
+            : t
+        )
       );
 
     let proposal;
     setTurns((prev) => {
-      proposal = prev.find((t) => t.id === turnId)?.proposal;
+      proposal = prev.find((t) => t.id === turnId)?.proposals[proposalIndex];
       return prev;
     });
     if (!proposal || proposal.status !== "pending") return;
@@ -104,11 +108,16 @@ export function useAsk() {
     }
   }, []);
 
-  const cancelUpdate = useCallback((turnId) => {
+  const cancelUpdate = useCallback((turnId, proposalIndex) => {
     setTurns((prev) =>
       prev.map((t) =>
-        t.id === turnId && t.proposal && t.proposal.status === "pending"
-          ? { ...t, proposal: { ...t.proposal, status: "cancelled" } }
+        t.id === turnId
+          ? {
+              ...t,
+              proposals: t.proposals.map((p, i) =>
+                i === proposalIndex && p.status === "pending" ? { ...p, status: "cancelled" } : p
+              ),
+            }
           : t
       )
     );
@@ -133,14 +142,17 @@ function applyEvent(evt, patch) {
     case "proposal":
       patch((t) => ({
         ...t,
-        proposal: {
-          org: evt.org,
-          sobject: evt.sobject,
-          record_id: evt.record_id,
-          changes: evt.changes ?? [],
-          status: "pending", // pending | applying | applied | error
-          error: null,
-        },
+        proposals: [
+          ...t.proposals,
+          {
+            org: evt.org,
+            sobject: evt.sobject,
+            record_id: evt.record_id,
+            changes: evt.changes ?? [],
+            status: "pending", // pending | applying | applied | error
+            error: null,
+          },
+        ],
       }));
       break;
     case "done":
